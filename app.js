@@ -1,6 +1,6 @@
 import { ORDRE_CHAMPS, appState, stateActions } from './state.js';
 import { chargerDonnees, sauvegarderDonnees, exporterCSV, exporterPDF } from './storage.js';
-import { initialiserClavier, afficherClavier, réinitialiserChampsClavier } from './keyboard.js';
+import { initialiserClavier, afficherClavier, réinitialiserChampsClavier, réinitialiserEtatForce } from './keyboard.js';
 
 appState.grumes = chargerDonnees();
 
@@ -53,29 +53,40 @@ function mettreAJourVue() {
     const tbody = document.getElementById('logList');
     if (!tbody) return;
     tbody.innerHTML = '';
-    let total = 0;
+    
+    let totalVolume = 0;
+    let totalCount = 0;
 
     appState.grumes.forEach((g, index) => {
-        total += g.volume;
+        // Point de vigilance : Seules les grumes 100% complètes incrémentent les compteurs globaux
+        if (!g.incomplete) {
+            totalVolume += g.volume;
+            totalCount++;
+        }
+
         const tr = document.createElement('tr');
         tr.id = g.id || ("row-" + index);
+        
+        const txtDiam = (typeof g.diametre === 'number') ? g.diametre.toFixed(0) : g.diametre;
+        const txtLong = (typeof g.longueur === 'number') ? g.longueur.toFixed(1) : g.longueur;
+        const txtVol = (typeof g.volume === 'number') ? g.volume.toFixed(3) : g.volume;
         
         tr.innerHTML = `
             <td><b>${g.plaquette}</b></td>
             <td style="color:#ffff00">${g.essence}</td>
             <td style="color:#2ecc71; text-align:center;">${g.qualite}</td>
-            <td style="text-align:center;">${g.diametre.toFixed(0)}</td>
-            <td style="text-align:center;">${g.longueur.toFixed(1)}</td>
-            <td style="text-align:right; padding-right:6px;">${g.volume.toFixed(3)}</td>
+            <td style="text-align:center;">${txtDiam}</td>
+            <td style="text-align:center;">${txtLong}</td>
+            <td style="text-align:right; padding-right:6px;">${txtVol}</td>
             <td><button class="btn-del" data-index="${index}">✖</button></td>
         `;
         tbody.appendChild(tr);
     });
 
     const countEl = document.getElementById('logCount');
-    if (countEl) countEl.innerText = `(${appState.grumes.length})`;
+    if (countEl) countEl.innerText = `(${totalCount})`;
 
-    document.getElementById('totalVolume').innerText = total.toFixed(3);
+    document.getElementById('totalVolume').innerText = totalVolume.toFixed(3);
     sauvegarderDonnees(appState.grumes);
 }
 
@@ -96,6 +107,8 @@ function restaurerBoutonsActions() {
     btnClr.innerText = "VIDER LA LISTE";
     btnClr.style.color = "var(--error-red)";
     btnClr.style.backgroundColor = "#333";
+    
+    réinitialiserEtatForce();
 }
 
 document.getElementById('logList')?.addEventListener('click', (e) => {
@@ -163,7 +176,7 @@ document.getElementById('btn-action-clear')?.addEventListener('click', (e) => {
 });
 
 document.addEventListener('click', () => {
-    if (appState.choixExportActif || appState.choixViderActif || appState.ligneASupprimer !== null) {
+    if (appState.choixExportActif || appState.choixViderActif || appState.ligneASupprimer !== null || appState.choixForceActif) {
         restaurerBoutonsActions();
     }
 });

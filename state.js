@@ -10,6 +10,7 @@ export const ORDRE_CHAMPS = ['ess', 'diam', 'long', 'q', 'plaq'];
 export const appState = {
     grumes: [], champActif: null, modeActuel: "essences", pageEssence: 0,
     choixExportActif: false, choixViderActif: false, ligneASupprimer: null,
+    choixForceActif: false, // État du bouton de débrayage de saisie incomplète
     dataSaisie: { ess: "", diam: "", long: "", q: "", plaq: "" }
 };
 
@@ -82,30 +83,33 @@ export const stateActions = {
     },
 
     /**
-     * Valide, convertit et fige le volume calculé à 3 décimales avant l'ajout à l'inventaire.
-     * @returns {Object|null} Le nouvel objet grume créé ou null si incomplet.
+     * Valide la grume courante ou force sa création avec des tirets si incomplète.
+     * @returns {Object|null} Le nouvel objet grume créé ou null si la validation échoue.
+     * Point de vigilance : Le marquage 'incomplete: true' permet d'isoler la grume du compteur et du grand cumul.
      */
     ajouterGrumeActive() {
         const { ess, diam, long, q, plaq } = appState.dataSaisie;
-        if (!ess || !diam || !long || !q || !plaq) return null;
+        const estIncomplet = !ess || !diam || !long || !q || !plaq;
         
-        const d = parseFloat(diam);
-        const l = parseFloat(long);
+        if (estIncomplet && !appState.choixForceActif) return null;
         
-        // Formule du cylindre avec passage du diamètre en mètres
-        const volBrut = Math.PI * Math.pow((d / 2) / 100, 2) * l;
-        
-        // Point de vigilance : Arrondi strict et stockage direct à 3 décimales pour bloquer toute dérive numérique
-        const volArrondi = Math.round(volBrut * 1000) / 1000;
+        let volArrondi = "—";
+        if (diam && long) {
+            const d = parseFloat(diam);
+            const l = parseFloat(long);
+            const volBrut = Math.PI * Math.pow((d / 2) / 100, 2) * l;
+            volArrondi = Math.round(volBrut * 1000) / 1000;
+        }
         
         const nve = { 
             id: "row-" + Date.now(), 
-            plaquette: plaq, 
-            essence: ess, 
-            qualite: q, 
-            diametre: d, 
-            longueur: l, 
-            volume: volArrondi 
+            plaquette: plaq || "—", 
+            essence: ess || "—", 
+            qualite: q || "—", 
+            diametre: diam ? parseFloat(diam) : "—", 
+            longueur: long ? parseFloat(long) : "—", 
+            volume: volArrondi,
+            incomplete: estIncomplet
         };
         
         appState.grumes.push(nve);

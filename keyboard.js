@@ -14,6 +14,17 @@ export function initialiserClavier(onValiderGrume) {
         const action = touche.getAttribute('data-key');
         const indexEssence = touche.getAttribute('data-idx');
         const valeurQualite = touche.getAttribute('data-q');
+        const optionForce = touche.getAttribute('data-opt');
+
+        // Point de vigilance : Annulation du mode FORCE si on clique sur une autre touche d'action ou de saisie
+        if (appState.choixForceActif && optionForce !== 'FORCE' && action !== 'next') {
+            réinitialiserEtatForce();
+        }
+
+        if (optionForce === 'FORCE') {
+            gererBoutonForce();
+            return;
+        }
 
         if (action) gererActionClavier(action);
         if (indexEssence !== null) {
@@ -55,7 +66,6 @@ export function afficherClavier(idChamp) {
     else if (idChamp === 'q') basculerModeVisuel('qualite');
     else basculerModeVisuel('chiffres');
     
-    // Point de vigilance : Seule la longueur conserve le point normal, tout le reste le grise
     const touchePoint = document.querySelector('.key[data-key="."]');
     if (touchePoint) {
         touchePoint.style.opacity = (idChamp === 'long') ? "1" : "0.3";
@@ -67,6 +77,7 @@ export function masquerClavier() {
     document.getElementById('custom-keyboard')?.classList.remove('open');
     document.querySelectorAll('.input-block').forEach(b => b.classList.remove('active'));
     appState.champActif = null;
+    if (appState.choixForceActif) réinitialiserEtatForce();
 }
 
 export function réinitialiserChampsClavier() {
@@ -111,6 +122,11 @@ function mettreAJourBoutonsEssences() {
 }
 
 function toucheSuivant() {
+    if (appState.choixForceActif && callbackValidation) {
+        callbackValidation();
+        réinitialiserEtatForce();
+        return;
+    }
     if (!appState.champActif) return;
     const { ess, diam, long, q, plaq } = appState.dataSaisie;
 
@@ -121,6 +137,27 @@ function toucheSuivant() {
     if (callbackValidation) callbackValidation();
     const suiv = stateActions.calculerSuivant();
     if (suiv) afficherClavier(suiv);
+}
+
+function gererBoutonForce() {
+    const btnForce = document.querySelector('.key[data-opt="FORCE"]');
+    if (!btnForce) return;
+    appState.choixForceActif = !appState.choixForceActif;
+    if (appState.choixForceActif) {
+        btnForce.style.backgroundColor = "#e67e22"; // Orange d'attente
+        btnForce.style.color = "#ffffff";
+    } else {
+        réinitialiserEtatForce();
+    }
+}
+
+export function réinitialiserEtatForce() {
+    const btnForce = document.querySelector('.key[data-opt="FORCE"]');
+    if (btnForce) {
+        btnForce.style.backgroundColor = "";
+        btnForce.style.color = "";
+    }
+    appState.choixForceActif = false;
 }
 
 function gererActionClavier(action) {
