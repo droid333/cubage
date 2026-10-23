@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cubage Forestier Pro</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
+    <meta name="theme-color" content="#1a1a1a">
+</head>
+<body>
+
+<div class="container">
+    <div class="header-box">
+        <div class="total-title">Volume Cumulé</div>
+        <!-- Point de vigilance : Couleur du compteur ajustée au bleu #2980b9 du clavier numérique avec écart de 20px -->
+        <div class="total-value"><span id="logCount" style="color:#2980b9; margin-right:20px;">(0)</span><span id="totalVolume">0.000</span> m³</div>
+    </div>
+
+    <!-- Carrousel de saisie horizontal à 5 blocs (Ajusté pour défilement bloc par bloc) -->
+    <div class="inputs-grid">
+        <div class="input-block" id="block-ess" role="button" tabindex="0" aria-label="Saisir l'essence">
+            <div class="input-label">Essence</div>
+            <div class="input-value" id="val-ess"></div>
+        </div>
+        <div class="input-block" id="block-diam" role="button" tabindex="0" aria-label="Saisir le diamètre">
+            <div class="input-label">Diamètre (cm)</div>
+            <div class="input-value" id="val-diam"></div>
+        </div>
+        <div class="input-block" id="block-long" role="button" tabindex="0" aria-label="Saisir la longueur">
+            <div class="input-label">Longueur (m)</div>
+            <div class="input-value" id="val-long"></div>
+        </div>
+        <div class="input-block" id="block-q" role="button" tabindex="0" aria-label="Saisir la qualité">
+            <div class="input-label">Qualité</div>
+            <div class="input-value" id="val-q"></div>
+        </div>
+        <div class="input-block" id="block-plaq" role="button" tabindex="0" aria-label="Saisir la plaquette">
+            <div class="input-label">Plaquette</div>
+            <div class="input-value" id="val-plaq"></div>
+        </div>
+    </div>
+
+    <div class="table-scroll">
+        <table>
+            <thead>
+                <tr>
+                    <th>N°</th>
+                    <th>ESS.</th>
+                    <th>Q.</th>
+                    <th>DIAM (cm)</th>
+                    <th>LONG (m)</th>
+                    <th>VOL (m³)</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="logList"></tbody>
+        </table>
+    </div>
+
+    <div class="actions-bar">
+        <div class="btn-sys" id="btn-action-export">EXPORTER</div>
+        <div class="btn-sys" id="btn-action-clear" style="color:var(--error-red);">VIDER LA LISTE</div>
+    </div>
+</div>
+
+<div id="keyboard-container">
+    <div class="terrain-keyboard" id="custom-keyboard">
+        <!-- 1. MODE ESSENCES -->
+        <div id="mode-essences" class="keyboard-mode">
+            <div class="key" data-idx="0"></div>
+            <div class="key" data-idx="1"></div>
+            <div class="key" data-idx="2"></div>
+            <div class="key action-key" style="background:#7f8c8d;" data-key="back">⌫</div>
+            <div class="key" data-idx="3"></div>
+            <div class="key" data-idx="4"></div>
+            <div class="key" data-idx="5"></div>
+            <div class="key action-key" style="background:var(--success-green);" data-key="next">OK/SUIV</div>
+            <div class="key" data-idx="6"></div>
+            <div class="key" data-idx="7"></div>
+            <div class="key" data-idx="8"></div>
+            <!-- Point de vigilance : Libellé du mode actuel ESS en marron -->
+            <div class="key action-key" style="background:#5c4033;" data-key="cycle">ESS</div>
+            <div class="key action-key" style="background:#34495e;" data-key="prev-page">◀</div>
+            <div class="key empty-key" style="color:var(--text-muted); font-size:0.95rem;" id="ess-page-indicator">1/3</div>
+            <div class="key action-key" style="background:#34495e;" data-key="next-page">▶</div>
+            <div class="key action-key" style="background:#c0392b;" data-key="close">✖</div>
+        </div>
+
+        <!-- 2. MODE CHIFFRES -->
+        <div id="mode-chiffres" class="keyboard-mode hidden-mode">
+            <div class="key" data-key="1">1</div>
+            <div class="key" data-key="2">2</div>
+            <div class="key" data-key="3">3</div>
+            <div class="key action-key" style="background:#7f8c8d;" data-key="back">⌫</div>
+            <div class="key" data-key="4">4</div>
+            <div class="key" data-key="5">5</div>
+            <div class="key" data-key="6">6</div>
+            <div class="key action-key" style="background:var(--success-green);" data-key="next">OK/SUIV</div>
+            <div class="key" data-key="7">7</div>
+            <div class="key" data-key="8">8</div>
+            <div class="key" data-key="9">9</div>
+            <!-- Point de vigilance : Libellé du mode actuel 123 en bleu -->
+            <div class="key action-key" style="background:#2980b9;" data-key="cycle">123</div>
+            <div class="key empty-key">&nbsp;</div>
+            <div class="key" data-key="0">0</div>
+            <div class="key" data-key=".">.</div>
+            <div class="key action-key" style="background:#c0392b;" data-key="close">✖</div>
+        </div>
+
+        <!-- 3. MODE QUALITÉ -->
+        <div id="mode-qualite" class="keyboard-mode hidden-mode">
+            <div class="key" data-q="A">A</div>
+            <div class="key" data-q="A/B">A/B</div>
+            <div class="key" data-q="B">B</div>
+            <div class="key action-key" style="background:#7f8c8d;" data-key="back">⌫</div>
+            <div class="key" data-q="B/C">B/C</div>
+            <div class="key" data-q="C">C</div>
+            <div class="key" data-q="C/D">C/D</div>
+            <div class="key action-key" style="background:var(--success-green);" data-key="next">OK/SUIV</div>
+            <div class="key" data-q="C1">C1</div>
+            <div class="key" data-q="C2">C2</div>
+            <div class="key" data-q="D">D</div>
+            <!-- Point de vigilance : Libellé du mode actuel QUAL en violet sombre #8854d0 -->
+            <div class="key action-key" style="background:#8854d0;" data-key="cycle">QUAL</div>
+            <div class="key" data-q="E">E</div>
+            <div class="key" data-q="PAL">PAL</div>
+            <div class="key" data-q="BIL">BIL</div>
+            <div class="key action-key" style="background:#c0392b;" data-key="close">✖</div>
+        </div>
+
+        <!-- 4. MODE OPTIONS -->
+        <div id="mode-options" class="keyboard-mode hidden-mode">
+            <div class="key action-key" style="background:#34495e;" data-opt="ABREV">ABREV</div>
+            <div class="key action-key" style="background:#34495e;" data-opt="FORCE">FORCE</div>
+            <div class="key action-key" style="background:#34495e;" data-opt="MODIF">MODIF</div>
+            <div class="key action-key" style="background:#7f8c8d;" data-key="back">0</div>
+            <div class="key empty-key">&nbsp;</div>
+            <div class="key empty-key">&nbsp;</div>
+            <div class="key empty-key">&nbsp;</div>
+            <div class="key action-key" style="background:var(--success-green);" data-key="next">OK/SUIV</div>
+            <div class="key empty-key">&nbsp;</div>
+            <div class="key empty-key">&nbsp;</div>
+            <div class="key empty-key">&nbsp;</div>
+            <!-- Point de vigilance : Libellé du mode actuel OPT en jaune -->
+            <div class="key action-key" style="background:#ffff00; color:#1a1a1a;" data-key="cycle">OPT</div>
+            <div class="key empty-key">&nbsp;</div>
+            <div class="key empty-key">&nbsp;</div>
+            <div class="key empty-key">&nbsp;</div>
+            <div class="key action-key" style="background:#c0392b;" data-key="close">✖</div>
+        </div>
+    </div>
+</div>
+
+<script src="jspdf.umd.min.js"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>
