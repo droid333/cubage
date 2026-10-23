@@ -16,14 +16,15 @@ export function initialiserClavier(onValiderGrume) {
         const valeurQualite = touche.getAttribute('data-q');
         const optionForce = touche.getAttribute('data-opt');
 
-        // Point de vigilance : Annulation du mode FORCE si on clique sur une autre touche d'action ou de saisie
-        if (appState.choixForceActif && optionForce !== 'FORCE' && action !== 'next') {
-            réinitialiserEtatForce();
-        }
-
+        // Point de vigilance : Gestion exclusive du bouton FORCE avant d'évaluer les autres touches
         if (optionForce === 'FORCE') {
             gererBoutonForce();
             return;
+        }
+
+        // Point de vigilance : Annulation automatique du mode FORCE si l'utilisateur change d'avis et clique ailleurs
+        if (appState.choixForceActif && action !== 'next') {
+            réinitialiserEtatForce();
         }
 
         if (action) gererActionClavier(action);
@@ -122,19 +123,23 @@ function mettreAJourBoutonsEssences() {
 }
 
 function toucheSuivant() {
+    // Comportement FORCE : Valide immédiatement la grume incomplète
     if (appState.choixForceActif && callbackValidation) {
         callbackValidation();
         réinitialiserEtatForce();
         return;
     }
+    
     if (!appState.champActif) return;
     const { ess, diam, long, q, plaq } = appState.dataSaisie;
 
+    // Comportement normal 1 : Saisie complète, ajoute la grume à la liste
     if (ess && diam && long && q && plaq && callbackValidation) {
         callbackValidation();
         return;
     }
-    if (callbackValidation) callbackValidation();
+    
+    // Comportement normal 2 : Saisie en cours, passe au champ vide suivant
     const suiv = stateActions.calculerSuivant();
     if (suiv) afficherClavier(suiv);
 }
@@ -142,10 +147,10 @@ function toucheSuivant() {
 function gererBoutonForce() {
     const btnForce = document.querySelector('.key[data-opt="FORCE"]');
     if (!btnForce) return;
+    
     appState.choixForceActif = !appState.choixForceActif;
     if (appState.choixForceActif) {
-        btnForce.style.backgroundColor = "#e67e22"; // Orange d'attente
-        btnForce.style.color = "#ffffff";
+        btnForce.style.background = "#e67e22"; // Écrase le style inline CSS avec l'orange vif
     } else {
         réinitialiserEtatForce();
     }
@@ -154,8 +159,7 @@ function gererBoutonForce() {
 export function réinitialiserEtatForce() {
     const btnForce = document.querySelector('.key[data-opt="FORCE"]');
     if (btnForce) {
-        btnForce.style.backgroundColor = "";
-        btnForce.style.color = "";
+        btnForce.style.background = "#34495e"; // Restaure le bleu-gris ardoise d'origine parfait
     }
     appState.choixForceActif = false;
 }
