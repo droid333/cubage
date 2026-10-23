@@ -105,7 +105,6 @@ function restaurerBoutonsActions() {
     if (btnForce) btnForce.style.background = "#34495e";
 }
 
-// Point de vigilance : Interception centrale du bouton FORCE calquée sur l'architecture de suppression
 document.getElementById('keyboard-container')?.addEventListener('click', (e) => {
     const touche = e.target;
     if (touche.getAttribute('data-opt') === 'FORCE') {
@@ -137,6 +136,10 @@ document.getElementById('logList')?.addEventListener('click', (e) => {
 
 document.getElementById('btn-action-export')?.addEventListener('click', (e) => {
     e.stopPropagation();
+    
+    // Point de vigilance : Annule instantanément le mode FORCE au clic, calqué sur le comportement de la croix
+    if (appState.choixForceActif) restaurerBoutonsActions();
+    
     if (appState.choixViderActif || appState.ligneASupprimer !== null) return;
     const btnExp = document.getElementById('btn-action-export');
     const btnClr = document.getElementById('btn-action-clear');
@@ -155,6 +158,10 @@ document.getElementById('btn-action-export')?.addEventListener('click', (e) => {
 
 document.getElementById('btn-action-clear')?.addEventListener('click', (e) => {
     e.stopPropagation();
+    
+    // Point de vigilance : Annule instantanément le mode FORCE au clic, calqué sur le comportement de la croix
+    if (appState.choixForceActif) restaurerBoutonsActions();
+    
     const btnClr = document.getElementById('btn-action-clear');
     if (!btnClr) return;
 
