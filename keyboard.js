@@ -14,18 +14,7 @@ export function initialiserClavier(onValiderGrume) {
         const action = touche.getAttribute('data-key');
         const indexEssence = touche.getAttribute('data-idx');
         const valeurQualite = touche.getAttribute('data-q');
-        const optionForce = touche.getAttribute('data-opt');
-
-        // Point de vigilance : Gestion exclusive du bouton FORCE avant d'évaluer les autres touches
-        if (optionForce === 'FORCE') {
-            gererBoutonForce();
-            return;
-        }
-
-        // Point de vigilance : Annulation automatique du mode FORCE si l'utilisateur change d'avis et clique ailleurs
-        if (appState.choixForceActif && action !== 'next') {
-            réinitialiserEtatForce();
-        }
+        const optionMenu = touche.getAttribute('data-opt');
 
         if (action) gererActionClavier(action);
         if (indexEssence !== null) {
@@ -67,6 +56,7 @@ export function afficherClavier(idChamp) {
     else if (idChamp === 'q') basculerModeVisuel('qualite');
     else basculerModeVisuel('chiffres');
     
+    // Point de vigilance : Seule la longueur conserve le point normal, tout le reste le grise
     const touchePoint = document.querySelector('.key[data-key="."]');
     if (touchePoint) {
         touchePoint.style.opacity = (idChamp === 'long') ? "1" : "0.3";
@@ -78,7 +68,6 @@ export function masquerClavier() {
     document.getElementById('custom-keyboard')?.classList.remove('open');
     document.querySelectorAll('.input-block').forEach(b => b.classList.remove('active'));
     appState.champActif = null;
-    if (appState.choixForceActif) réinitialiserEtatForce();
 }
 
 export function réinitialiserChampsClavier() {
@@ -123,45 +112,16 @@ function mettreAJourBoutonsEssences() {
 }
 
 function toucheSuivant() {
-    // Comportement FORCE : Valide immédiatement la grume incomplète
-    if (appState.choixForceActif && callbackValidation) {
-        callbackValidation();
-        réinitialiserEtatForce();
-        return;
-    }
-    
     if (!appState.champActif) return;
     const { ess, diam, long, q, plaq } = appState.dataSaisie;
 
-    // Comportement normal 1 : Saisie complète, ajoute la grume à la liste
     if (ess && diam && long && q && plaq && callbackValidation) {
         callbackValidation();
         return;
     }
-    
-    // Comportement normal 2 : Saisie en cours, passe au champ vide suivant
+    if (callbackValidation) callbackValidation();
     const suiv = stateActions.calculerSuivant();
     if (suiv) afficherClavier(suiv);
-}
-
-function gererBoutonForce() {
-    const btnForce = document.querySelector('.key[data-opt="FORCE"]');
-    if (!btnForce) return;
-    
-    appState.choixForceActif = !appState.choixForceActif;
-    if (appState.choixForceActif) {
-        btnForce.style.background = "#e67e22"; // Écrase le style inline CSS avec l'orange vif
-    } else {
-        réinitialiserEtatForce();
-    }
-}
-
-export function réinitialiserEtatForce() {
-    const btnForce = document.querySelector('.key[data-opt="FORCE"]');
-    if (btnForce) {
-        btnForce.style.background = "#34495e"; // Restaure le bleu-gris ardoise d'origine parfait
-    }
-    appState.choixForceActif = false;
 }
 
 function gererActionClavier(action) {

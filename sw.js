@@ -1,5 +1,5 @@
 // Point de vigilance : Incrémentation stricte de la version pour forcer la mise à jour CDN sur GitHub Pages
-const CACHE_NAME = 'cubage-v5.7';
+const CACHE_NAME = 'cubage-v5.8';
 
 const ASSETS = [
     'index.html',

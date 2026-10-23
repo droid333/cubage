@@ -1,6 +1,6 @@
 import { ORDRE_CHAMPS, appState, stateActions } from './state.js';
 import { chargerDonnees, sauvegarderDonnees, exporterCSV, exporterPDF } from './storage.js';
-import { initialiserClavier, afficherClavier, réinitialiserChampsClavier, réinitialiserEtatForce } from './keyboard.js';
+import { initialiserClavier, afficherClavier, réinitialiserChampsClavier } from './keyboard.js';
 
 appState.grumes = chargerDonnees();
 
@@ -16,7 +16,7 @@ function receptionDonneesClavier() {
     animerFlash(`block-${appState.champActif}`, "rgba(46, 204, 113, 0.8)");
 
     const nouvelleGrume = stateActions.ajouterGrumeActive();
-    if (!nouvelleGrume) return; // Saisie incomplète, le clavier poursuit son cycle automatiquement
+    if (!nouvelleGrume) return; // Saisie incomplète ou bouton FORCE non armé
 
     réinitialiserChampsClavier();
     mettreAJourVue();
@@ -28,11 +28,6 @@ function receptionDonneesClavier() {
     afficherClavier('ess');
 }
 
-/**
- * Gère le flash vert de validation et nettoie ses traces de style après exécution.
- * @param {string} id - L'identifiant de la ligne ou du bloc HTML à animer.
- * @param {string} rgbaColor - La couleur du flash sous forme de chaîne RGBA.
- */
 function animerFlash(id, rgbaColor) {
     const el = document.getElementById(id);
     if (!el) return;
@@ -41,8 +36,6 @@ function animerFlash(id, rgbaColor) {
     setTimeout(() => {
         el.style.transition = "background-color 1.2s ease-out";
         el.style.backgroundColor = id.startsWith('row-') ? "transparent" : "var(--bg-card)";
-        
-        // Point de vigilance : Nettoyage par chaîne vide après les 1,2s pour redonner le contrôle au CSS de suppression
         setTimeout(() => {
             if (el) el.style.transition = "";
         }, 1200);
@@ -58,7 +51,6 @@ function mettreAJourVue() {
     let totalCount = 0;
 
     appState.grumes.forEach((g, index) => {
-        // Point de vigilance : Seules les grumes 100% complètes incrémentent les compteurs globaux
         if (!g.incomplete) {
             totalVolume += g.volume;
             totalCount++;
@@ -102,14 +94,31 @@ function restaurerBoutonsActions() {
     appState.choixExportActif = false;
     appState.choixViderActif = false;
     appState.ligneASupprimer = null;
+    appState.choixForceActif = false;
     
     btnExp.innerText = "EXPORTER";
     btnClr.innerText = "VIDER LA LISTE";
     btnClr.style.color = "var(--error-red)";
     btnClr.style.backgroundColor = "#333";
     
-    réinitialiserEtatForce();
+    const btnForce = document.querySelector('.key[data-opt="FORCE"]');
+    if (btnForce) btnForce.style.background = "#34495e";
 }
+
+// Point de vigilance : Interception centrale du bouton FORCE calquée sur l'architecture de suppression
+document.getElementById('keyboard-container')?.addEventListener('click', (e) => {
+    const touche = e.target;
+    if (touche.getAttribute('data-opt') === 'FORCE') {
+        e.stopPropagation();
+        const dejaActif = appState.choixForceActif;
+        restaurerBoutonsActions();
+        
+        if (!dejaActif) {
+            appState.choixForceActif = true;
+            touche.style.background = "#e67e22";
+        }
+    }
+});
 
 document.getElementById('logList')?.addEventListener('click', (e) => {
     if (e.target.classList.contains('btn-del')) {
@@ -118,10 +127,7 @@ document.getElementById('logList')?.addEventListener('click', (e) => {
         const btnClr = document.getElementById('btn-action-clear');
         if (btnClr) {
             appState.ligneASupprimer = parseInt(e.target.getAttribute('data-index'), 10);
-            
-            const ligneCible = e.target.closest('tr');
-            ligneCible?.classList.add('deleting');
-            
+            e.target.closest('tr')?.classList.add('deleting');
             btnClr.innerText = "SUPPRIMER ?";
             btnClr.style.backgroundColor = "var(--error-red)";
             btnClr.style.color = "black";
@@ -131,9 +137,10 @@ document.getElementById('logList')?.addEventListener('click', (e) => {
 
 document.getElementById('btn-action-export')?.addEventListener('click', (e) => {
     e.stopPropagation();
+    if (appState.choixViderActif || appState.ligneASupprimer !== null) return;
     const btnExp = document.getElementById('btn-action-export');
     const btnClr = document.getElementById('btn-action-clear');
-    if (!btnExp || !btnClr || appState.choixViderActif || appState.ligneASupprimer !== null) return;
+    if (!btnExp || !btnClr) return;
 
     if (!appState.choixExportActif) {
         appState.choixExportActif = true;
@@ -161,9 +168,7 @@ document.getElementById('btn-action-clear')?.addEventListener('click', (e) => {
     } else {
         if (!appState.choixViderActif) {
             appState.choixViderActif = true;
-            
             document.querySelector('table')?.classList.add('deleting-all');
-            
             btnClr.innerText = "VIDER ?";
             btnClr.style.backgroundColor = "var(--error-red)";
             btnClr.style.color = "black";

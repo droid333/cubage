@@ -10,7 +10,7 @@ export const ORDRE_CHAMPS = ['ess', 'diam', 'long', 'q', 'plaq'];
 export const appState = {
     grumes: [], champActif: null, modeActuel: "essences", pageEssence: 0,
     choixExportActif: false, choixViderActif: false, ligneASupprimer: null,
-    choixForceActif: false, // État du bouton de débrayage de saisie incomplète
+    choixForceActif: false, // Armement du forçage calqué sur choixViderActif
     dataSaisie: { ess: "", diam: "", long: "", q: "", plaq: "" }
 };
 
@@ -83,9 +83,8 @@ export const stateActions = {
     },
 
     /**
-     * Valide la grume courante ou force sa création avec des tirets si incomplète.
+     * Valide et crée la grume, ou force sa création avec des tirets si choixForceActif est armé.
      * @returns {Object|null} Le nouvel objet grume créé ou null si la validation échoue.
-     * Point de vigilance : Le marquage 'incomplete: true' permet d'isoler la grume du compteur et du grand cumul.
      */
     ajouterGrumeActive() {
         const { ess, diam, long, q, plaq } = appState.dataSaisie;
