@@ -14,7 +14,6 @@ export function initialiserClavier(onValiderGrume) {
         const action = touche.getAttribute('data-key');
         const indexEssence = touche.getAttribute('data-idx');
         const valeurQualite = touche.getAttribute('data-q');
-        const optionMenu = touche.getAttribute('data-opt');
 
         if (action) gererActionClavier(action);
         if (indexEssence !== null) {
@@ -112,6 +111,12 @@ function mettreAJourBoutonsEssences() {
 }
 
 function toucheSuivant() {
+    // Point de vigilance : Si le mode FORCE est actif, on applique le même comportement strict d'arrêt que la grume complète
+    if (appState.choixForceActif && callbackValidation) {
+        callbackValidation();
+        return;
+    }
+
     if (!appState.champActif) return;
     const { ess, diam, long, q, plaq } = appState.dataSaisie;
 
